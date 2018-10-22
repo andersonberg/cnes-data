@@ -9,6 +9,9 @@ import scrapy
 
 
 class CnesItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
-    pass
+    cidade = scrapy.Field()
+    equipamento = scrapy.Field()
+    existentes = scrapy.Field()
+    emUso = scrapy.Field()
+    existentesSUS = scrapy.Field()
+    emUsoSUS = scrapy.Field()
