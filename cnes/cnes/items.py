@@ -5,13 +5,19 @@
 # See documentation in:
 # https://doc.scrapy.org/en/latest/topics/items.html
 
-import scrapy
+from scrapy.item import Field, Item
 
 
-class CnesItem(scrapy.Item):
-    cidade = scrapy.Field()
-    equipamento = scrapy.Field()
-    existentes = scrapy.Field()
-    emUso = scrapy.Field()
-    existentesSUS = scrapy.Field()
-    emUsoSUS = scrapy.Field()
+class CityItem(Item):
+    cidade = Field()
+    estado = Field()
+    equipamentos = Field()
+    url = Field()
+
+
+class EquipmentItem(Item):
+    equipamento = Field()
+    existentes = Field()
+    emUso = Field()
+    existentesSUS = Field()
+    emUsoSUS = Field()
