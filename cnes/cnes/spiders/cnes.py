@@ -4,7 +4,7 @@ import re
 import scrapy
 # import pandas as pd
 from urllib.parse import unquote, urljoin
-from cnes.items import CnesItem
+from cnes.loaders import CityItemLoader, EquipmentItemLoader
 
 
 class CnesSpider(scrapy.Spider):
@@ -47,7 +47,8 @@ class CnesSpider(scrapy.Spider):
         for state in self.br_states.values():
             if state == '00' or not state:
                 continue
-            state_url = unquote(urljoin(self.base_url, f'?VEstado={state}'))
+            state_url = unquote(
+                urljoin(self.base_url, '?VEstado={}'.format(state)))
             yield scrapy.Request(
                 state_url,
                 callback=self.parse_state,
@@ -63,7 +64,8 @@ class CnesSpider(scrapy.Spider):
         for city in cities:
             if city:
                 city_url = unquote(
-                    urljoin(self.base_url, f'?VEstado={state}&VMun={city}'))
+                    urljoin(self.base_url, '?VEstado={}&VMun={}'.format(
+                        state, city)))
                 yield scrapy.Request(
                     city_url,
                     callback=self.parse_city,
@@ -74,9 +76,20 @@ class CnesSpider(scrapy.Spider):
                 )
 
     def parse_city(self, response):
-        city = response.meta['city_code']
+        city_loader = CityItemLoader()
+        city_loader.add_value('cidade', response.meta['city_code'])
+        city_loader.add_value('estado', response.meta['state_code'])
         table = response.xpath('//table[@border="1"]')
-        for sel in table.xpath('.//tr'):
-            line = sel.xpath('td/font/text()').extract()
-            equipamento = sel.xpath('td/font/a/text()').extract_first()
-        return
+        for row in table.xpath('.//tr[contains(@bgcolor, "#cccccc")]'):
+            line = row.xpath('td/font/text()').extract()
+
+            if line:
+                item_loader = EquipmentItemLoader(selector=row)
+                item_loader.add_xpath('equipamento', 'td/font/a/text()')
+                item_loader.add_value('existentes', line[-4])
+                item_loader.add_value('emUso', line[-3])
+                item_loader.add_value('existentesSUS', line[-2])
+                item_loader.add_value('emUsoSUS', line[-1])
+
+                city_loader.add_value('equipamentos', item_loader.load_item())
+        yield city_loader.load_item()
